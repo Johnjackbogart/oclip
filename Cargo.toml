@@ -1,0 +1,34 @@
+[workspace]
+members = ["xtask"]
+resolver = "2"
+
+[package]
+name = "oclip"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.87"
+license = "MIT"
+description = "An open-source clipper plugin (VST3/CLAP): gain, softness, and clip amount."
+repository = "https://github.com/johnjackbogart/oclip"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+# Symbols kept temporarily (strip = "none", debug = true) so crash reports resolve real
+# function names instead of raw offsets. Re-enable `strip = "symbols"` once the macOS GUI
+# crash (see CLAUDE.md "Known issues") is understood/fixed.
+[profile.release]
+lto = "thin"
+strip = "none"
+debug = true
+codegen-units = 1
+
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = "none"
+
+[dependencies]
+egui = "=0.35.0"
+nice-plug = "0.2.3"
+nice-plug-egui = "0.3.0"
