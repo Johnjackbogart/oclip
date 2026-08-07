@@ -1,8 +1,8 @@
 use nice_plug::prelude::*;
 use std::sync::Arc;
 
-mod dsp;
-mod editor;
+pub mod dsp;
+pub mod editor;
 
 /// A gain/softness/clip-amount clipper. See `CLAUDE.md` for the DSP design rationale.
 struct Oclip {

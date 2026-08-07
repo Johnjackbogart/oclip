@@ -3,7 +3,7 @@ use nice_plug::editor::dpi::LogicalSize;
 use nice_plug_egui::{EguiNiceSettings, EguiState, create_egui_editor};
 use std::sync::Arc;
 
-mod knob;
+pub mod knob;
 
 use crate::OclipParams;
 use knob::Knob;

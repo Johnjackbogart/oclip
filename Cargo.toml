@@ -32,3 +32,11 @@ strip = "none"
 egui = "=0.35.0"
 nice-plug = "0.2.3"
 nice-plug-egui = "0.3.0"
+rtrb = "0.3.4"
+
+# Only used by `examples/editor_preview.rs`, a standalone dev harness that opens the editor UI in
+# a plain window with no DAW/host — lets the GUI (and the baseview view/window machinery
+# implicated in the macOS crash, see CLAUDE.md "Known issues") be exercised and debugged locally.
+[dev-dependencies]
+baseview = "0.2.2"
+egui-baseview = "0.6.0"
