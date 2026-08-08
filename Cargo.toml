@@ -40,3 +40,8 @@ rtrb = "0.3.4"
 [dev-dependencies]
 baseview = "0.2.2"
 egui-baseview = "0.6.0"
+
+# EXPERIMENTAL, not committed: local patch testing a fix for the macOS hit_test stack overflow
+# (see CLAUDE.md "Known issues"). Remove before committing if this doesn't pan out.
+[patch.crates-io]
+baseview = { path = "/private/tmp/claude-502/-Users-jackbogart-r-dev-oclip/b5849912-cd1b-4984-a6e3-97a7e7447655/scratchpad/baseview-0.2.2-patched" }
