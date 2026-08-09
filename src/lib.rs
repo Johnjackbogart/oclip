@@ -98,11 +98,7 @@ impl Plugin for Oclip {
     }
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        // Temporarily disabled: opening the custom GUI segfaults on macOS (stack overflow via
-        // runaway recursion during AppKit hitTest/cursor routing — see CLAUDE.md "Known
-        // issues"). Falls back to the host's generic parameter panel until that's root-caused.
-        let _ = editor::create; // silence unused-function warning while disabled
-        None
+        editor::create(self.params.clone())
     }
 
     fn process(

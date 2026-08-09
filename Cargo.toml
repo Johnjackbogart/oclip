@@ -41,7 +41,24 @@ rtrb = "0.3.4"
 baseview = "0.2.2"
 egui-baseview = "0.6.0"
 
-# EXPERIMENTAL, not committed: local patch testing a fix for the macOS hit_test stack overflow
-# (see CLAUDE.md "Known issues"). Remove before committing if this doesn't pan out.
+# Fix for the macOS `hit_test` stack-overflow crash (see CLAUDE.md "Known issues"): baseview's
+# `hitTest:` override re-derives its NSView superclass via a live `this.view.class()` lookup on
+# every call, which was returning the wrong class on macOS 26.6 and causing the override to
+# recurse into itself until the stack overflowed. This fork hardcodes the statically-known
+# `NSView::class()` instead, matching the superclass baseview itself already registers this view
+# class with (see `src/wrappers/appkit/view/implementation.rs`). Verified: builds clean and no
+# longer crashes on launch in `examples/editor_preview.rs`. Track for upstreaming to
+# RustAudio/baseview; drop this patch once/if it lands there.
 [patch.crates-io]
-baseview = { path = "/private/tmp/claude-502/-Users-jackbogart-r-dev-oclip/b5849912-cd1b-4984-a6e3-97a7e7447655/scratchpad/baseview-0.2.2-patched" }
+# Fix for the macOS `hit_test` stack-overflow crash (see CLAUDE.md "Known issues"). Root cause
+# confirmed via lldb: at some point after window creation, AppKit installs a KVO observer on the
+# view (isa-swizzling it to a synthetic `NSKVONotifying_BaseviewNSView_<uuid>` subclass). From
+# then on, baseview's `hitTest:` override's `this.view.class().superclass()` no longer resolves to
+# `NSView` — `.class()` returns the swizzled proxy, whose superclass is baseview's own registered
+# class, not NSView. So `msg_send![super(...), hitTest:]` starts its method search at baseview's
+# own class and calls the override again, forever. This fork hardcodes the statically-known
+# `NSView::class()` instead, matching the superclass baseview itself already registers this view
+# class with (see `src/wrappers/appkit/view/implementation.rs`), sidestepping the swizzled
+# instance lookup entirely. Verified via examples/editor_preview.rs and lldb. Track for
+# upstreaming to RustAudio/baseview; drop this patch once/if it lands there.
+baseview = { git = "https://github.com/Johnjackbogart/baseview", branch = "fix_hit_test" }

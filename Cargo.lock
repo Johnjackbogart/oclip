@@ -129,6 +129,7 @@ dependencies = [
 [[package]]
 name = "baseview"
 version = "0.2.2"
+source = "git+https://github.com/Johnjackbogart/baseview?branch=fix_hit_test#cedcb4fbc426ee3bf7127adc79ed651ebfee3b22"
 dependencies = [
  "block2 0.6.2",
  "bytemuck",
