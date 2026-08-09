@@ -1,3 +1,3 @@
 mod clipper;
 
-pub use clipper::process_sample;
+pub use clipper::{clip_sample, process_sample};

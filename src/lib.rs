@@ -3,10 +3,18 @@ use std::sync::Arc;
 
 pub mod dsp;
 pub mod editor;
+pub mod scope;
+
+/// Frames of headroom for the audio->GUI scope channel: generous enough that a momentary GUI
+/// stall doesn't drop data, without meaningfully allocating anything process() touches (the
+/// channel is created once, in `Oclip::default`, not per-block).
+const SCOPE_CHANNEL_CAPACITY: usize = 32_768;
 
 /// A gain/softness/clip-amount clipper. See `CLAUDE.md` for the DSP design rationale.
 struct Oclip {
     params: Arc<OclipParams>,
+    scope_producer: scope::ScopeProducer,
+    scope_consumer: scope::ScopeConsumer,
 }
 
 #[derive(Params)]
@@ -29,8 +37,11 @@ struct OclipParams {
 
 impl Default for Oclip {
     fn default() -> Self {
+        let (scope_producer, scope_consumer) = scope::channel(SCOPE_CHANNEL_CAPACITY);
         Self {
             params: Arc::new(OclipParams::default()),
+            scope_producer,
+            scope_consumer,
         }
     }
 }
@@ -98,7 +109,7 @@ impl Plugin for Oclip {
     }
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        editor::create(self.params.clone())
+        editor::create(self.params.clone(), self.scope_consumer.clone())
     }
 
     fn process(
@@ -115,8 +126,23 @@ impl Plugin for Oclip {
             let gain_linear = util::db_to_gain(gain);
             let threshold_linear = util::db_to_gain(clip_amount);
 
-            for sample in channel_samples.iter_mut() {
-                *sample = dsp::process_sample(*sample, gain_linear, threshold_linear, softness);
+            // Scope only tracks channel 0 — it's a visualization, not a per-channel meter, so one
+            // representative channel per frame is enough (and keeps this at one push per frame,
+            // not one per channel).
+            let mut scope_frame = None;
+
+            for (channel_index, sample) in channel_samples.iter_mut().enumerate() {
+                let pre_clip = *sample * gain_linear;
+                let post_clip = dsp::clip_sample(pre_clip, threshold_linear, softness);
+                *sample = post_clip;
+
+                if channel_index == 0 {
+                    scope_frame = Some((pre_clip, post_clip));
+                }
+            }
+
+            if let Some((input, output)) = scope_frame {
+                self.scope_producer.push(input, output);
             }
         }
 
