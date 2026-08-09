@@ -5,12 +5,13 @@
 use crate::scope::ScopeFrame;
 
 /// Fixed linear-amplitude axis range the scope displays, independent of the current clip
-/// threshold. Clip Amount's linear range tops out at 1.0 (0dB); this leaves headroom above that
-/// for a hot pre-clip signal. Crucially, keeping this fixed (rather than scaling with the current
-/// ceiling) is what makes the ceiling lines actually move as Clip Amount changes — if the axis
-/// rescaled to the ceiling too, the lines would land at the same apparent height regardless of
-/// the threshold, which is the bug this fixes.
-const Y_RANGE: f32 = 1.8;
+/// threshold. Clip Amount's linear range tops out at 1.0 (0dB); at 1.1 that lands the ceiling
+/// lines at ~91% of the widget's half-height when Clip Amount is maxed out, with a bit of
+/// headroom left for a hot pre-clip signal above it. Crucially, keeping this fixed (rather than
+/// scaling with the current ceiling) is what makes the ceiling lines actually move as Clip Amount
+/// changes — if the axis rescaled to the ceiling too, the lines would land at the same apparent
+/// height regardless of the threshold, which is the bug this fixes.
+const Y_RANGE: f32 = 1.1;
 
 /// A scrolling two-trace oscilloscope: pre-clip (dim) and post-clip (bright), sharing the same
 /// linear-amplitude y-axis, with the clip ceiling marked.
@@ -67,10 +68,14 @@ impl egui::Widget for Scope<'_> {
                         .collect()
                 };
 
-                // Shade the gap between the two traces, one quad per sample interval, so the
-                // amount being clipped reads as a visible wedge rather than something you have to
-                // spot between two thin overlapping lines. This is what actually makes softness's
-                // effect on the knee shape legible at a glance.
+                // Shade the gap between the two traces so the amount being clipped reads as a
+                // visible wedge rather than something you have to spot between two thin
+                // overlapping lines — this is what makes softness's effect on the knee shape
+                // legible at a glance. Built as one raw triangle mesh (a quad per sample interval,
+                // sharing vertices) rather than one `Shape::convex_polygon` per interval: each
+                // `Shape` gets its own anti-aliased silhouette, so N adjacent shapes sharing edges
+                // produced a visible seam at every single sample boundary. A single mesh has only
+                // one outer boundary to feather.
                 let accent = visuals.selection.bg_fill;
                 let fill_color = egui::Color32::from_rgba_unmultiplied(
                     accent.r(),
@@ -78,20 +83,20 @@ impl egui::Widget for Scope<'_> {
                     accent.b(),
                     60,
                 );
+                let mut fill_mesh = egui::Mesh::default();
                 for (idx, window) in self.frames.windows(2).enumerate() {
                     let (a, b) = (window[0], window[1]);
-                    let quad = vec![
-                        egui::pos2(x_at(idx), map_y(a.input)),
-                        egui::pos2(x_at(idx + 1), map_y(b.input)),
-                        egui::pos2(x_at(idx + 1), map_y(b.output)),
-                        egui::pos2(x_at(idx), map_y(a.output)),
-                    ];
-                    painter.add(egui::Shape::convex_polygon(
-                        quad,
-                        fill_color,
-                        egui::Stroke::NONE,
-                    ));
+                    let base = fill_mesh.vertices.len() as u32;
+                    fill_mesh.colored_vertex(egui::pos2(x_at(idx), map_y(a.input)), fill_color);
+                    fill_mesh
+                        .colored_vertex(egui::pos2(x_at(idx + 1), map_y(b.input)), fill_color);
+                    fill_mesh
+                        .colored_vertex(egui::pos2(x_at(idx + 1), map_y(b.output)), fill_color);
+                    fill_mesh.colored_vertex(egui::pos2(x_at(idx), map_y(a.output)), fill_color);
+                    fill_mesh.add_triangle(base, base + 1, base + 2);
+                    fill_mesh.add_triangle(base, base + 2, base + 3);
                 }
+                painter.add(egui::Shape::mesh(fill_mesh));
 
                 let dim_stroke = egui::Stroke::new(1.0, visuals.widgets.inactive.bg_fill);
                 painter.add(egui::Shape::line(points_for(|f| f.input), dim_stroke));

@@ -33,6 +33,20 @@ const SAMPLES_PER_FRAME: usize = 64;
 /// preview well past the default 0dB ceiling so clipping (and softness's effect on its shape) is
 /// visible immediately, without needing to touch a knob first.
 const PREVIEW_TONE_DRIVE: f32 = 1.8;
+/// Fixed width for a label+knob column, matching `KNOB_COLUMN_WIDTH` in `src/editor/mod.rs` (see
+/// that constant's comment for why this can't be `ui.vertical_centered`).
+const KNOB_COLUMN_WIDTH: f32 = 100.0;
+
+fn knob_column(
+    ui: &mut egui::Ui,
+    add_contents: impl FnOnce(&mut egui::Ui),
+) -> egui::InnerResponse<()> {
+    ui.allocate_ui_with_layout(
+        egui::vec2(KNOB_COLUMN_WIDTH, 0.0),
+        egui::Layout::top_down(egui::Align::Center),
+        add_contents,
+    )
+}
 
 fn fmt_gain(normalized: f32) -> String {
     format!("{:.2} dB", -24.0 + normalized * 48.0)
@@ -139,7 +153,7 @@ fn main() {
             .with_tile("oclip preview")
             .with_size(Size::Logical(LogicalSize {
                 width: 260.0,
-                height: 420.0,
+                height: 360.0,
             })),
         state,
         |_ctx: &Context, _commands: &mut ExtraOutputCommands, _state: &mut PreviewState| {},
@@ -159,34 +173,46 @@ fn main() {
                     ui.add(Scope::new(&state.scope_history, ceiling));
                     ui.add_space(12.0);
 
-                    ui.label("Gain");
-                    ui.add(Knob::new(MockKnobValue {
-                        name: "Gain",
-                        normalized: &mut state.gain,
-                        default_normalized: 0.5,
-                        format: fmt_gain,
-                    }));
-                    ui.add_space(12.0);
-
-                    ui.label("Clip Amount");
-                    ui.add(Knob::new(MockKnobValue {
-                        name: "Clip Amount",
-                        normalized: &mut state.clip_amount,
-                        default_normalized: 1.0,
-                        format: fmt_clip_amount,
-                    }));
-                    ui.add_space(12.0);
-
-                    ui.label("Softness");
-                    ui.horizontal(|ui| {
-                        ui.add(Knob::new(MockKnobValue {
-                            name: "Softness",
-                            normalized: &mut state.softness,
-                            default_normalized: 0.5,
-                            format: fmt_softness,
-                        }));
-                        ui.add(TransferCurve::new(ceiling, state.softness));
+                    let row1 = ui.horizontal_top(|ui| {
+                        let gain_col = knob_column(ui, |ui| {
+                            ui.label("Gain");
+                            ui.add(Knob::new(MockKnobValue {
+                                name: "Gain",
+                                normalized: &mut state.gain,
+                                default_normalized: 0.5,
+                                format: fmt_gain,
+                            }));
+                        });
+                        eprintln!("DEBUG gain_col.rect = {:?}", gain_col.response.rect);
+                        let clip_col = knob_column(ui, |ui| {
+                            ui.label("Clip Amount");
+                            ui.add(Knob::new(MockKnobValue {
+                                name: "Clip Amount",
+                                normalized: &mut state.clip_amount,
+                                default_normalized: 1.0,
+                                format: fmt_clip_amount,
+                            }));
+                        });
+                        eprintln!("DEBUG clip_col.rect = {:?}", clip_col.response.rect);
                     });
+                    eprintln!("DEBUG row1.rect = {:?}", row1.response.rect);
+                    ui.add_space(12.0);
+
+                    let row2 = ui.horizontal(|ui| {
+                        knob_column(ui, |ui| {
+                            ui.label("Softness");
+                            ui.add(Knob::new(MockKnobValue {
+                                name: "Softness",
+                                normalized: &mut state.softness,
+                                default_normalized: 0.5,
+                                format: fmt_softness,
+                            }));
+                        });
+                        ui.add_space(8.0);
+                        let curve_resp = ui.add(TransferCurve::new(ceiling, state.softness));
+                        eprintln!("DEBUG curve_resp.rect = {:?}", curve_resp.rect);
+                    });
+                    eprintln!("DEBUG row2.rect = {:?}", row2.response.rect);
                 });
             });
         },

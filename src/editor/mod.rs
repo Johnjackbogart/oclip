@@ -20,8 +20,25 @@ use transfer_curve::TransferCurve;
 /// real-time constraints.
 const SCOPE_WINDOW_LEN: usize = 8192;
 
+/// Fixed width for a label+knob column, wide enough to fit "Clip Amount" (the longest label)
+/// without wrapping. Must be a fixed allocation, not `vertical_centered` — that layout centers
+/// within the *full remaining width of its parent*, so as the first child in a `horizontal` row
+/// it claims nearly the whole row for itself, squeezing whatever comes after it into a sliver
+/// (word-wrapping the next label into many lines and pushing everything below off the window).
+const KNOB_COLUMN_WIDTH: f32 = 100.0;
+
+/// A label above a knob, centered within a fixed-width column. See [`KNOB_COLUMN_WIDTH`] for why
+/// this can't just be `ui.vertical_centered`.
+fn knob_column(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui)) {
+    ui.allocate_ui_with_layout(
+        egui::vec2(KNOB_COLUMN_WIDTH, 0.0),
+        egui::Layout::top_down(egui::Align::Center),
+        add_contents,
+    );
+}
+
 pub(crate) fn default_state() -> Arc<EguiState> {
-    EguiState::from_size(LogicalSize::new(260.0, 420.0))
+    EguiState::from_size(LogicalSize::new(260.0, 360.0))
 }
 
 pub(crate) fn create(
@@ -49,17 +66,24 @@ pub(crate) fn create(
                 ui.add(Scope::new(history, ceiling));
                 ui.add_space(12.0);
 
-                ui.label("Gain");
-                ui.add(Knob::for_param(&params.gain, setter));
-                ui.add_space(12.0);
-
-                ui.label("Clip Amount");
-                ui.add(Knob::for_param(&params.clip_amount, setter));
-                ui.add_space(12.0);
-
-                ui.label("Softness");
                 ui.horizontal(|ui| {
-                    ui.add(Knob::for_param(&params.softness, setter));
+                    knob_column(ui, |ui| {
+                        ui.label("Gain");
+                        ui.add(Knob::for_param(&params.gain, setter));
+                    });
+                    knob_column(ui, |ui| {
+                        ui.label("Clip Amount");
+                        ui.add(Knob::for_param(&params.clip_amount, setter));
+                    });
+                });
+                ui.add_space(12.0);
+
+                ui.horizontal(|ui| {
+                    knob_column(ui, |ui| {
+                        ui.label("Softness");
+                        ui.add(Knob::for_param(&params.softness, setter));
+                    });
+                    ui.add_space(8.0);
                     ui.add(TransferCurve::new(ceiling, params.softness.value()));
                 });
             });
