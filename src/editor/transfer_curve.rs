@@ -31,7 +31,9 @@ impl egui::Widget for TransferCurve {
         let (rect, response) = ui.allocate_exact_size(self.size, egui::Sense::hover());
 
         if ui.is_rect_visible(rect) {
-            let painter = ui.painter();
+            // Clipped to `rect`, same reasoning as `Scope`: keeps the curve from ever bleeding
+            // past the widget's own bounds.
+            let painter = ui.painter_at(rect);
             let visuals = ui.visuals();
 
             painter.rect_filled(rect, 4.0, visuals.extreme_bg_color);

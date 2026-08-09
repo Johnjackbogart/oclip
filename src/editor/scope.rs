@@ -4,6 +4,14 @@
 
 use crate::scope::ScopeFrame;
 
+/// Fixed linear-amplitude axis range the scope displays, independent of the current clip
+/// threshold. Clip Amount's linear range tops out at 1.0 (0dB); this leaves headroom above that
+/// for a hot pre-clip signal. Crucially, keeping this fixed (rather than scaling with the current
+/// ceiling) is what makes the ceiling lines actually move as Clip Amount changes — if the axis
+/// rescaled to the ceiling too, the lines would land at the same apparent height regardless of
+/// the threshold, which is the bug this fixes.
+const Y_RANGE: f32 = 1.8;
+
 /// A scrolling two-trace oscilloscope: pre-clip (dim) and post-clip (bright), sharing the same
 /// linear-amplitude y-axis, with the clip ceiling marked.
 pub struct Scope<'a> {
@@ -29,15 +37,15 @@ impl egui::Widget for Scope<'_> {
         let (rect, response) = ui.allocate_exact_size(self.size, egui::Sense::hover());
 
         if ui.is_rect_visible(rect) {
-            let painter = ui.painter();
+            // Clipped to `rect` so nothing drawn here — traces, fill, stroke width, or any
+            // future off-by-a-pixel math — can ever bleed past the widget's own bounds.
+            let painter = ui.painter_at(rect);
             let visuals = ui.visuals();
 
             painter.rect_filled(rect, 4.0, visuals.extreme_bg_color);
 
-            // Headroom above the ceiling so a hot pre-clip signal doesn't slam the top edge.
-            let y_range = self.ceiling * 1.3;
             let map_y = |value: f32| {
-                let t = (value / y_range).clamp(-1.0, 1.0);
+                let t = (value / Y_RANGE).clamp(-1.0, 1.0);
                 rect.center().y - t * rect.height() * 0.5
             };
 
