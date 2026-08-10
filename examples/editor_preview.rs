@@ -8,7 +8,7 @@
 //! This exists to develop and debug the GUI locally — including reproducing the macOS crash
 //! described in `CLAUDE.md` "Known issues", since it opens the same baseview window/view (and
 //! therefore the same AppKit hitTest/cursor-routing machinery implicated there) that the real
-//! plugin editor does. It calls `oclip::editor::build_ui` directly — the same layout function the
+//! plugin editor does. It calls `openclip::editor::build_ui` directly — the same layout function the
 //! real editor calls — bound to plain in-memory values via `MockKnobValue` instead of real
 //! `nice_plug` parameters, so there's no separate hand-copied layout here that could drift out of
 //! sync with the real editor.
@@ -20,9 +20,9 @@
 use baseview::dpi::{LogicalSize, Size};
 use egui::{CentralPanel, Context, FullOutput, Ui, ViewportOutput};
 use egui_baseview::{EguiWindow, EguiWindowSettings, ExtraOutputCommands};
-use oclip::dsp;
-use oclip::editor::knob::{Knob, KnobValue};
-use oclip::scope::ScopeFrame;
+use openclip::dsp;
+use openclip::editor::knob::{Knob, KnobValue};
+use openclip::scope::ScopeFrame;
 
 /// How many synthetic samples the scope preview displays at once, matching the real editor's
 /// window (see `SCOPE_WINDOW_LEN` in `src/editor/mod.rs`).
@@ -139,7 +139,7 @@ fn main() {
 
     EguiWindow::open_blocking(
         EguiWindowSettings::new()
-            .with_tile("oclip preview")
+            .with_tile("openclip preview")
             .with_size(Size::Logical(LogicalSize {
                 width: 260.0,
                 height: 360.0,
@@ -156,7 +156,7 @@ fn main() {
             let softness_normalized = state.softness;
 
             CentralPanel::default().show(ui, |ui| {
-                oclip::editor::build_ui(
+                openclip::editor::build_ui(
                     ui,
                     Knob::new(MockKnobValue {
                         name: "Gain",

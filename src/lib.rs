@@ -7,18 +7,18 @@ pub mod scope;
 
 /// Frames of headroom for the audio->GUI scope channel: generous enough that a momentary GUI
 /// stall doesn't drop data, without meaningfully allocating anything process() touches (the
-/// channel is created once, in `Oclip::default`, not per-block).
+/// channel is created once, in `Openclip::default`, not per-block).
 const SCOPE_CHANNEL_CAPACITY: usize = 32_768;
 
 /// A gain/softness/clip-amount clipper. See `CLAUDE.md` for the DSP design rationale.
-struct Oclip {
-    params: Arc<OclipParams>,
+struct Openclip {
+    params: Arc<OpenclipParams>,
     scope_producer: scope::ScopeProducer,
     scope_consumer: scope::ScopeConsumer,
 }
 
 #[derive(Params)]
-struct OclipParams {
+struct OpenclipParams {
     #[persist = "editor-state"]
     editor_state: Arc<nice_plug_egui::EguiState>,
 
@@ -35,18 +35,18 @@ struct OclipParams {
     softness: FloatParam,
 }
 
-impl Default for Oclip {
+impl Default for Openclip {
     fn default() -> Self {
         let (scope_producer, scope_consumer) = scope::channel(SCOPE_CHANNEL_CAPACITY);
         Self {
-            params: Arc::new(OclipParams::default()),
+            params: Arc::new(OpenclipParams::default()),
             scope_producer,
             scope_consumer,
         }
     }
 }
 
-impl Default for OclipParams {
+impl Default for OpenclipParams {
     fn default() -> Self {
         Self {
             editor_state: editor::default_state(),
@@ -84,8 +84,8 @@ impl Default for OclipParams {
     }
 }
 
-impl Plugin for Oclip {
-    const NAME: &'static str = "oclip";
+impl Plugin for Openclip {
+    const NAME: &'static str = "openclip";
     const VENDOR: &'static str = "r tech";
     const URL: &'static str = "https://github.com/johnjackbogart/oclip";
     const EMAIL: &'static str = "johnjackbogart@gmail.com";
@@ -150,8 +150,8 @@ impl Plugin for Oclip {
     }
 }
 
-impl ClapPlugin for Oclip {
-    const CLAP_ID: &'static str = "org.oclip.oclip";
+impl ClapPlugin for Openclip {
+    const CLAP_ID: &'static str = "org.openclip.openclip";
     const CLAP_DESCRIPTION: Option<&'static str> =
         Some("A clipper: adjustable gain, clip amount, and softness.");
     const CLAP_MANUAL_URL: Option<&'static str> = Some(Self::URL);
@@ -163,11 +163,11 @@ impl ClapPlugin for Oclip {
     ];
 }
 
-impl Vst3Plugin for Oclip {
-    const VST3_CLASS_ID: [u8; 16] = *b"oclipclipperplug";
+impl Vst3Plugin for Openclip {
+    const VST3_CLASS_ID: [u8; 16] = *b"openclipperplugi";
     const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] =
         &[Vst3SubCategory::Fx, Vst3SubCategory::Distortion];
 }
 
-nice_export_clap!(Oclip);
-nice_export_vst3!(Oclip);
+nice_export_clap!(Openclip);
+nice_export_vst3!(Openclip);

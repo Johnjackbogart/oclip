@@ -8,7 +8,7 @@ pub mod knob;
 pub mod scope;
 pub mod transfer_curve;
 
-use crate::OclipParams;
+use crate::OpenclipParams;
 use crate::scope::{ScopeConsumer, ScopeFrame};
 use knob::{Knob, KnobValue};
 use scope::Scope;
@@ -90,7 +90,7 @@ pub fn build_ui<G: KnobValue, C: KnobValue, S: KnobValue>(
 
     ui.vertical_centered(|ui| {
         ui.add_space(8.0);
-        ui.heading("oclip");
+        ui.heading("openclip");
         ui.add_space(12.0);
 
         ui.add(Scope::new(history, ceiling));
@@ -122,13 +122,13 @@ pub fn build_ui<G: KnobValue, C: KnobValue, S: KnobValue>(
 }
 
 pub(crate) fn create(
-    params: Arc<OclipParams>,
+    params: Arc<OpenclipParams>,
     scope_consumer: ScopeConsumer,
 ) -> Option<Box<dyn Editor>> {
     create_egui_editor(
         params.editor_state.clone(),
         Vec::<ScopeFrame>::new(),
-        EguiNiceSettings::new().with_tile("oclip"),
+        EguiNiceSettings::new().with_tile("openclip"),
         |_ctx, _commands, _state| {},
         move |ui, setter, _commands, history: &mut Vec<ScopeFrame>| {
             scope_consumer.drain_into(history);

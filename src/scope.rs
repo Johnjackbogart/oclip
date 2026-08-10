@@ -14,7 +14,7 @@ pub struct ScopeFrame {
     pub output: f32,
 }
 
-/// Audio-thread producer half. Owned directly by `Oclip` (not shared), so pushing needs no lock.
+/// Audio-thread producer half. Owned directly by `Openclip` (not shared), so pushing needs no lock.
 pub struct ScopeProducer {
     inner: rtrb::Producer<ScopeFrame>,
 }

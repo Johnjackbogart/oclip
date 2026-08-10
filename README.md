@@ -1,4 +1,4 @@
-# oclip
+# openclip
 
 An open-source clipper plugin for Ableton Live and other DAWs, in the spirit of GClip. Three
 controls, nothing else: **Gain**, **Clip Amount**, and **Softness**.
@@ -15,10 +15,10 @@ Built in Rust on [`nice-plug`](https://codeberg.org/RustAudio/nice-plug) for VST
 ```sh
 cargo build
 cargo test
-cargo xtask bundle oclip --release
+cargo xtask bundle openclip --release
 ```
 
-This produces `target/bundled/oclip.vst3` and `target/bundled/oclip.clap`. To load it in a DAW,
+This produces `target/bundled/openclip.vst3` and `target/bundled/openclip.clap`. To load it in a DAW,
 copy the `.vst3` bundle into your local VST3 plugin directory (on macOS:
 `~/Library/Audio/Plug-Ins/VST3/`) and rescan plugins.
 

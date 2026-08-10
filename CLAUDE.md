@@ -1,4 +1,4 @@
-# oclip
+# openclip
 
 An open-source clipper plugin (VST3 + CLAP) in the spirit of GClip. Rust, built on
 [`nice-plug`](https://codeberg.org/RustAudio/nice-plug) (a community-led fork/successor of
@@ -20,7 +20,7 @@ inline in `process()`.
 
 The GUI (`src/editor/`) is a custom egui interface: three rotary knobs bound to the params above,
 via a hand-rolled `Knob` widget in `src/editor/knob.rs` (nice-plug-egui only ships slider widgets,
-not knobs). **Currently disabled** — `Oclip::editor()` in `src/lib.rs` returns `None` instead of
+not knobs). **Currently disabled** — `Openclip::editor()` in `src/lib.rs` returns `None` instead of
 calling `editor::create()`, so hosts fall back to the generic parameter panel. See "Known issues"
 below before re-enabling it. Level metering was scoped out of v1 — see "Not in v1" below.
 
@@ -34,7 +34,7 @@ before adding it rather than expanding scope silently.
    the unit tests in `src/dsp/clipper.rs` should reflect real invariants (not just "whatever the
    code currently does" — see the git history for an example of a test that encoded a wrong
    assumption and had to be fixed).
-2. **Performance.** No allocation or locking in `process()` or anything it calls. `Oclip::process`
+2. **Performance.** No allocation or locking in `process()` or anything it calls. `Openclip::process`
    already follows the pattern to keep: pull one smoothed dB value per sample-*frame* (not per
    channel) from `param.smoothed.next()`, convert dB→linear once per frame with
    `util::db_to_gain`, then apply that single linear value across all channels in the frame. Don't
@@ -62,7 +62,7 @@ Ableton Live 12.4.3 on macOS 26.5.2 immediately on opening the editor: `EXC_BAD_
 cursor-rect/hit-test routing (`-[NSApplication sendEvent:]` → `routeCursorRect` →
 `-[NSView hitTest:]`), not in DSP/audio code.
 
-Leading hypothesis (not confirmed — the crash report had no symbols for `oclip`, see below): the
+Leading hypothesis (not confirmed — the crash report had no symbols for `openclip`, see below): the
 custom `hitTest:` override in `baseview-0.2.2/src/platform/macos/view.rs` (used to work around
 baseview's "first click dead zone" bug, #129/#202/#169) is meant to call the *real* `NSView`'s
 `hitTest:` via `msg_send![super(this.view, superclass), hitTest: point]`. If that superclass
@@ -88,10 +88,10 @@ stack (baseview/egui-baseview) is the part that has.
 ```sh
 cargo build              # library only, does not produce a loadable plugin bundle
 cargo test                # runs src/dsp/clipper.rs unit tests
-cargo xtask bundle oclip --release   # produces target/bundled/oclip.vst3 and oclip.clap
+cargo xtask bundle openclip --release   # produces target/bundled/openclip.vst3 and openclip.clap
 ```
 
-To manually test in a DAW, copy `target/bundled/oclip.vst3` into the local VST3 plugin directory
+To manually test in a DAW, copy `target/bundled/openclip.vst3` into the local VST3 plugin directory
 (`~/Library/Audio/Plug-Ins/VST3/` on macOS) and rescan plugins in the DAW.
 
 ## License
