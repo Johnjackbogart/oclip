@@ -11,6 +11,14 @@
 //! plugin editor does. `Knob` is generic over `oclip::editor::knob::KnobValue`, so this harness
 //! drives the exact same widget code as the real editor, just bound to plain in-memory values
 //! instead of real `nice_plug` parameters.
+//!
+//! `Scope` and `TransferCurve`, unlike `Knob`, aren't generic over a mock/real split — they just
+//! take plain values (frames, a linear ceiling, a softness fraction), so this harness drives the
+//! exact same widget code as the real editor for those too, fed by a synthetic 220 Hz tone pushed
+//! through the real `dsp::clip_sample` math (see [`PreviewState::advance_scope`]) rather than
+//! reimplemented/fake data. Layout constants (`SCOPE_WINDOW_LEN`, `KNOB_COLUMN_WIDTH`, window
+//! size) are kept numerically in sync with `src/editor/mod.rs` by hand — there's no shared
+//! source of truth for them, so if you change one, change the other.
 
 use baseview::dpi::{LogicalSize, Size};
 use egui::{CentralPanel, Context, FullOutput, Ui, ViewportOutput};
@@ -37,6 +45,10 @@ const PREVIEW_TONE_DRIVE: f32 = 1.8;
 /// that constant's comment for why this can't be `ui.vertical_centered`).
 const KNOB_COLUMN_WIDTH: f32 = 100.0;
 
+/// A label above a knob, centered within a fixed-width column. Mirrors `knob_column` in
+/// `src/editor/mod.rs` — see that function's doc comment for why this needs a fixed-width
+/// allocation (not `ui.vertical_centered`) and must be placed inside `ui.horizontal_top` rather
+/// than plain `ui.horizontal` (equal-height columns don't reliably line up under the latter).
 fn knob_column(
     ui: &mut egui::Ui,
     add_contents: impl FnOnce(&mut egui::Ui),
