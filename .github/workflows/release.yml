@@ -1,0 +1,84 @@
+name: Release
+
+# Builds the VST3/CLAP bundles for macOS (universal), Windows, and Linux whenever a GitHub
+# release is published, and attaches the zips to that release. The download page (site/) links
+# to these assets via the stable `releases/latest/download/<asset>` URLs, so asset names below
+# must stay stable across releases.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            name: macos-universal
+          - os: windows-latest
+            name: windows-x64
+          - os: ubuntu-latest
+            name: linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # baseview/egui need the X11/XCB/GL dev headers on Linux; ALSA/JACK come with nice-plug.
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libgl-dev libjack-dev libx11-xcb-dev \
+            libxcb1-dev libxcb-dri2-0-dev libxcb-icccm4-dev libxcursor-dev libxkbcommon-dev \
+            libxcb-shape0-dev libxcb-xfixes0-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Bundle (macOS universal)
+        if: runner.os == 'macOS'
+        run: cargo xtask bundle-universal openclip --release
+
+      - name: Bundle
+        if: runner.os != 'macOS'
+        run: cargo xtask bundle openclip --release
+
+      # Apple Silicon refuses to load completely unsigned code, so at minimum ad-hoc sign.
+      # Downloads will still carry the quarantine flag (no notarization) — the download page
+      # documents the `xattr -rd com.apple.quarantine` step.
+      - name: Ad-hoc codesign (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          codesign --force --deep -s - target/bundled/openclip.vst3
+          codesign --force -s - target/bundled/openclip.clap
+
+      - name: Package
+        shell: bash
+        working-directory: target/bundled
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            7z a ../../openclip-${{ matrix.name }}.zip openclip.vst3 openclip.clap
+          else
+            zip -r ../../openclip-${{ matrix.name }}.zip openclip.vst3 openclip.clap
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openclip-${{ matrix.name }}
+          path: openclip-${{ matrix.name }}.zip
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "openclip-${{ matrix.name }}.zip" --clobber

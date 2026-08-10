@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>openclip — free open-source clipper (VST3 / CLAP)</title>
+<meta name="description" content="openclip is a free, open-source clipper plugin (VST3 + CLAP) in the spirit of GClip. Gain, Clip Amount, Softness — nothing else.">
+<style>
+  :root {
+    --bg: #101014;
+    --panel: #18181f;
+    --border: #2a2a35;
+    --text: #e8e8ee;
+    --muted: #9a9aa8;
+    --accent: #ff5c39;
+    --accent-soft: rgba(255, 92, 57, 0.12);
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 4rem 1.5rem 5rem; }
+  h1 {
+    font-size: 3rem;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+  h1 .clip { color: var(--accent); }
+  .tagline { color: var(--muted); margin-top: 0.5rem; font-size: 1.125rem; }
+  .version {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-family: var(--mono);
+    font-size: 0.8125rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.2rem 0.75rem;
+  }
+  section { margin-top: 3rem; }
+  h2 {
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .downloads { display: grid; gap: 0.75rem; }
+  .dl {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+  .dl:hover { border-color: var(--accent); }
+  .dl strong { font-size: 1.0625rem; }
+  .dl span { color: var(--muted); font-size: 0.875rem; font-family: var(--mono); }
+  .params { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+  .param {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+  }
+  .param strong { display: block; margin-bottom: 0.25rem; }
+  .param p { color: var(--muted); font-size: 0.875rem; }
+  ol { padding-left: 1.25rem; color: var(--muted); }
+  ol li { margin-bottom: 0.5rem; }
+  ol li::marker { color: var(--accent); }
+  code {
+    font-family: var(--mono);
+    font-size: 0.8125rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1rem 0.4rem;
+  }
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+  }
+  pre code { background: none; border: none; padding: 0; }
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--panel);
+    border-radius: 0 10px 10px 0;
+    padding: 0.875rem 1.25rem;
+    color: var(--muted);
+    font-size: 0.9375rem;
+    margin-top: 1rem;
+  }
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+  a { color: var(--accent); }
+  @media (max-width: 560px) {
+    h1 { font-size: 2.25rem; }
+    .params { grid-template-columns: 1fr; }
+    .dl { flex-direction: column; gap: 0.25rem; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>open<span class="clip">clip</span></h1>
+    <p class="tagline">A free, open-source clipper plugin in the spirit of GClip. Three controls, nothing else.</p>
+    <span class="version" id="version">latest release</span>
+  </header>
+
+  <section>
+    <h2>Download</h2>
+    <div class="downloads">
+      <a class="dl" href="https://github.com/Johnjackbogart/oclip/releases/latest/download/openclip-macos-universal.zip">
+        <strong>macOS</strong><span>universal (Apple Silicon + Intel) · VST3 + CLAP</span>
+      </a>
+      <a class="dl" href="https://github.com/Johnjackbogart/oclip/releases/latest/download/openclip-windows-x64.zip">
+        <strong>Windows</strong><span>x64 · VST3 + CLAP</span>
+      </a>
+      <a class="dl" href="https://github.com/Johnjackbogart/oclip/releases/latest/download/openclip-linux-x64.zip">
+        <strong>Linux</strong><span>x64 · VST3 + CLAP</span>
+      </a>
+    </div>
+    <p class="note">Free as in MIT-licensed. All releases and source on
+      <a href="https://github.com/Johnjackbogart/oclip">GitHub</a>.</p>
+  </section>
+
+  <section>
+    <h2>Controls</h2>
+    <div class="params">
+      <div class="param"><strong>Gain</strong><p>Input drive in dB, applied before the clipper.</p></div>
+      <div class="param"><strong>Clip Amount</strong><p>Threshold/ceiling in dB. Lower = clips harder.</p></div>
+      <div class="param"><strong>Softness</strong><p>Blends a hard brick-wall clip into smooth tanh saturation.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Install</h2>
+    <ol>
+      <li>Unzip the download.</li>
+      <li>Copy <code>openclip.vst3</code> (and/or <code>openclip.clap</code>) into your plugin folder:
+        macOS <code>~/Library/Audio/Plug-Ins/VST3/</code> and <code>~/Library/Audio/Plug-Ins/CLAP/</code> ·
+        Windows <code>C:\Program Files\Common Files\VST3\</code> ·
+        Linux <code>~/.vst3/</code> and <code>~/.clap/</code></li>
+      <li>Rescan plugins in your DAW.</li>
+    </ol>
+    <div class="note">
+      <strong>macOS:</strong> the plugin isn’t notarized, so Gatekeeper will quarantine the download.
+      After copying it into place, clear the flag and rescan:
+      <pre><code>xattr -rd com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/openclip.vst3</code></pre>
+    </div>
+  </section>
+
+  <footer>
+    <p>Built in Rust on <a href="https://codeberg.org/RustAudio/nice-plug">nice-plug</a>.
+    MIT licensed. AU (Logic/GarageBand) and oversampling are not implemented yet.</p>
+  </footer>
+</main>
+<script>
+  fetch("https://api.github.com/repos/Johnjackbogart/oclip/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rel) {
+      if (rel && rel.tag_name) {
+        document.getElementById("version").textContent = rel.tag_name;
+      }
+    })
+    .catch(function () { /* leave the placeholder text */ });
+</script>
+</body>
+</html>
