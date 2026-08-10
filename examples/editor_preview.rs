@@ -173,8 +173,8 @@ fn main() {
                     ui.add(Scope::new(&state.scope_history, ceiling));
                     ui.add_space(12.0);
 
-                    let row1 = ui.horizontal_top(|ui| {
-                        let gain_col = knob_column(ui, |ui| {
+                    ui.horizontal_top(|ui| {
+                        knob_column(ui, |ui| {
                             ui.label("Gain");
                             ui.add(Knob::new(MockKnobValue {
                                 name: "Gain",
@@ -183,8 +183,7 @@ fn main() {
                                 format: fmt_gain,
                             }));
                         });
-                        eprintln!("DEBUG gain_col.rect = {:?}", gain_col.response.rect);
-                        let clip_col = knob_column(ui, |ui| {
+                        knob_column(ui, |ui| {
                             ui.label("Clip Amount");
                             ui.add(Knob::new(MockKnobValue {
                                 name: "Clip Amount",
@@ -193,12 +192,10 @@ fn main() {
                                 format: fmt_clip_amount,
                             }));
                         });
-                        eprintln!("DEBUG clip_col.rect = {:?}", clip_col.response.rect);
                     });
-                    eprintln!("DEBUG row1.rect = {:?}", row1.response.rect);
                     ui.add_space(12.0);
 
-                    let row2 = ui.horizontal(|ui| {
+                    ui.horizontal_top(|ui| {
                         knob_column(ui, |ui| {
                             ui.label("Softness");
                             ui.add(Knob::new(MockKnobValue {
@@ -209,10 +206,8 @@ fn main() {
                             }));
                         });
                         ui.add_space(8.0);
-                        let curve_resp = ui.add(TransferCurve::new(ceiling, state.softness));
-                        eprintln!("DEBUG curve_resp.rect = {:?}", curve_resp.rect);
+                        ui.add(TransferCurve::new(ceiling, state.softness));
                     });
-                    eprintln!("DEBUG row2.rect = {:?}", row2.response.rect);
                 });
             });
         },

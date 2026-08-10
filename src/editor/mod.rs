@@ -28,7 +28,10 @@ const SCOPE_WINDOW_LEN: usize = 8192;
 const KNOB_COLUMN_WIDTH: f32 = 100.0;
 
 /// A label above a knob, centered within a fixed-width column. See [`KNOB_COLUMN_WIDTH`] for why
-/// this can't just be `ui.vertical_centered`.
+/// this can't just be `ui.vertical_centered`. Place these inside `ui.horizontal_top`, not plain
+/// `ui.horizontal` — the latter's default `Align::Center` cross-axis placement doesn't reliably
+/// line up equal-height columns in immediate-mode layout (confirmed empirically: two knob columns
+/// of identical height ended up ~28px apart vertically under `ui.horizontal`).
 fn knob_column(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui)) {
     ui.allocate_ui_with_layout(
         egui::vec2(KNOB_COLUMN_WIDTH, 0.0),
@@ -66,7 +69,7 @@ pub(crate) fn create(
                 ui.add(Scope::new(history, ceiling));
                 ui.add_space(12.0);
 
-                ui.horizontal(|ui| {
+                ui.horizontal_top(|ui| {
                     knob_column(ui, |ui| {
                         ui.label("Gain");
                         ui.add(Knob::for_param(&params.gain, setter));
@@ -78,7 +81,7 @@ pub(crate) fn create(
                 });
                 ui.add_space(12.0);
 
-                ui.horizontal(|ui| {
+                ui.horizontal_top(|ui| {
                     knob_column(ui, |ui| {
                         ui.label("Softness");
                         ui.add(Knob::for_param(&params.softness, setter));
