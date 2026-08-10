@@ -8,25 +8,20 @@
 //! This exists to develop and debug the GUI locally — including reproducing the macOS crash
 //! described in `CLAUDE.md` "Known issues", since it opens the same baseview window/view (and
 //! therefore the same AppKit hitTest/cursor-routing machinery implicated there) that the real
-//! plugin editor does. `Knob` is generic over `oclip::editor::knob::KnobValue`, so this harness
-//! drives the exact same widget code as the real editor, just bound to plain in-memory values
-//! instead of real `nice_plug` parameters.
+//! plugin editor does. It calls `oclip::editor::build_ui` directly — the same layout function the
+//! real editor calls — bound to plain in-memory values via `MockKnobValue` instead of real
+//! `nice_plug` parameters, so there's no separate hand-copied layout here that could drift out of
+//! sync with the real editor.
 //!
-//! `Scope` and `TransferCurve`, unlike `Knob`, aren't generic over a mock/real split — they just
-//! take plain values (frames, a linear ceiling, a softness fraction), so this harness drives the
-//! exact same widget code as the real editor for those too, fed by a synthetic 220 Hz tone pushed
-//! through the real `dsp::clip_sample` math (see [`PreviewState::advance_scope`]) rather than
-//! reimplemented/fake data. Layout constants (`SCOPE_WINDOW_LEN`, `KNOB_COLUMN_WIDTH`, window
-//! size) are kept numerically in sync with `src/editor/mod.rs` by hand — there's no shared
-//! source of truth for them, so if you change one, change the other.
+//! `Scope` and `TransferCurve` are fed a synthetic 220 Hz tone pushed through the real
+//! `dsp::clip_sample` math (see [`PreviewState::advance_scope`]) rather than reimplemented/fake
+//! data.
 
 use baseview::dpi::{LogicalSize, Size};
 use egui::{CentralPanel, Context, FullOutput, Ui, ViewportOutput};
 use egui_baseview::{EguiWindow, EguiWindowSettings, ExtraOutputCommands};
 use oclip::dsp;
 use oclip::editor::knob::{Knob, KnobValue};
-use oclip::editor::scope::Scope;
-use oclip::editor::transfer_curve::TransferCurve;
 use oclip::scope::ScopeFrame;
 
 /// How many synthetic samples the scope preview displays at once, matching the real editor's
@@ -41,24 +36,6 @@ const SAMPLES_PER_FRAME: usize = 64;
 /// preview well past the default 0dB ceiling so clipping (and softness's effect on its shape) is
 /// visible immediately, without needing to touch a knob first.
 const PREVIEW_TONE_DRIVE: f32 = 1.8;
-/// Fixed width for a label+knob column, matching `KNOB_COLUMN_WIDTH` in `src/editor/mod.rs` (see
-/// that constant's comment for why this can't be `ui.vertical_centered`).
-const KNOB_COLUMN_WIDTH: f32 = 100.0;
-
-/// A label above a knob, centered within a fixed-width column. Mirrors `knob_column` in
-/// `src/editor/mod.rs` — see that function's doc comment for why this needs a fixed-width
-/// allocation (not `ui.vertical_centered`) and must be placed inside `ui.horizontal_top` rather
-/// than plain `ui.horizontal` (equal-height columns don't reliably line up under the latter).
-fn knob_column(
-    ui: &mut egui::Ui,
-    add_contents: impl FnOnce(&mut egui::Ui),
-) -> egui::InnerResponse<()> {
-    ui.allocate_ui_with_layout(
-        egui::vec2(KNOB_COLUMN_WIDTH, 0.0),
-        egui::Layout::top_down(egui::Align::Center),
-        add_contents,
-    )
-}
 
 fn fmt_gain(normalized: f32) -> String {
     format!("{:.2} dB", -24.0 + normalized * 48.0)
@@ -174,53 +151,35 @@ fn main() {
             state.advance_scope();
             ui.ctx().request_repaint(); // keep the synthetic tone animating
 
+            let clip_amount_db = -24.0 + state.clip_amount * 24.0;
+            let ceiling = nice_plug::util::db_to_gain(clip_amount_db);
+            let softness_normalized = state.softness;
+
             CentralPanel::default().show(ui, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.add_space(8.0);
-                    ui.heading("oclip");
-                    ui.add_space(12.0);
-
-                    let clip_amount_db = -24.0 + state.clip_amount * 24.0;
-                    let ceiling = nice_plug::util::db_to_gain(clip_amount_db);
-                    ui.add(Scope::new(&state.scope_history, ceiling));
-                    ui.add_space(12.0);
-
-                    ui.horizontal_top(|ui| {
-                        knob_column(ui, |ui| {
-                            ui.label("Gain");
-                            ui.add(Knob::new(MockKnobValue {
-                                name: "Gain",
-                                normalized: &mut state.gain,
-                                default_normalized: 0.5,
-                                format: fmt_gain,
-                            }));
-                        });
-                        knob_column(ui, |ui| {
-                            ui.label("Clip Amount");
-                            ui.add(Knob::new(MockKnobValue {
-                                name: "Clip Amount",
-                                normalized: &mut state.clip_amount,
-                                default_normalized: 1.0,
-                                format: fmt_clip_amount,
-                            }));
-                        });
-                    });
-                    ui.add_space(12.0);
-
-                    ui.horizontal_top(|ui| {
-                        knob_column(ui, |ui| {
-                            ui.label("Softness");
-                            ui.add(Knob::new(MockKnobValue {
-                                name: "Softness",
-                                normalized: &mut state.softness,
-                                default_normalized: 0.5,
-                                format: fmt_softness,
-                            }));
-                        });
-                        ui.add_space(8.0);
-                        ui.add(TransferCurve::new(ceiling, state.softness));
-                    });
-                });
+                oclip::editor::build_ui(
+                    ui,
+                    Knob::new(MockKnobValue {
+                        name: "Gain",
+                        normalized: &mut state.gain,
+                        default_normalized: 0.5,
+                        format: fmt_gain,
+                    }),
+                    Knob::new(MockKnobValue {
+                        name: "Clip Amount",
+                        normalized: &mut state.clip_amount,
+                        default_normalized: 1.0,
+                        format: fmt_clip_amount,
+                    }),
+                    Knob::new(MockKnobValue {
+                        name: "Softness",
+                        normalized: &mut state.softness,
+                        default_normalized: 0.5,
+                        format: fmt_softness,
+                    }),
+                    softness_normalized,
+                    ceiling,
+                    &state.scope_history,
+                );
             });
         },
     );
