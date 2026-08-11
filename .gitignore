@@ -1,2 +1,4 @@
 /target
 .DS_Store
+# populated by the Pages workflow in CI (latest release zips); never commit
+/site/downloads/
