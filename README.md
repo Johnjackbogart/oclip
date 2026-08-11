@@ -27,6 +27,8 @@ copy the `.vst3` bundle into your local VST3 plugin directory (on macOS:
 Early — v1 DSP and a minimal custom GUI. AU (Logic/GarageBand) support and oversampling are not
 implemented yet; see `CLAUDE.md`/`AGENTS.md` for the full rationale on what's deferred and why.
 
+This was vibe coded. I've read the code, it makes sense. But I'm learning Rust and am not an expert. The plug in works
+
 ## License
 
 MIT — see `LICENSE`.
