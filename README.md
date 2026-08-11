@@ -10,6 +10,12 @@ controls, nothing else: **Gain**, **Clip Amount**, and **Softness**.
 
 Built in Rust on [`nice-plug`](https://codeberg.org/RustAudio/nice-plug) for VST3 and CLAP.
 
+## Download
+
+Prebuilt VST3 + CLAP bundles for macOS (universal), Windows, and Linux:
+**[johnjackbogart.github.io/oclip](https://johnjackbogart.github.io/oclip/)** — or grab them
+directly from the [latest release](https://github.com/Johnjackbogart/oclip/releases/latest).
+
 ## Build
 
 ```sh

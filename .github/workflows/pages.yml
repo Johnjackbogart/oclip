@@ -1,6 +1,9 @@
 name: Deploy download page
 
-# Publishes site/ to GitHub Pages. One-time setup: repo Settings → Pages → Source: "GitHub Actions".
+# Publishes site/ to GitHub Pages, bundling the latest release's plugin zips into the deployment
+# so downloads are served from the Pages site itself. Re-runs after every "Release" workflow so
+# the hosted zips always match the latest release.
+# One-time setup: repo Settings → Pages → Source: "GitHub Actions".
 
 on:
   push:
@@ -8,6 +11,9 @@ on:
     paths:
       - "site/**"
       - ".github/workflows/pages.yml"
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -21,6 +27,8 @@ concurrency:
 
 jobs:
   deploy:
+    # For workflow_run triggers, only deploy after a successful release build.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -28,6 +36,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # Pull the latest release's plugin zips into the site so the Pages deployment hosts the
+      # downloads directly. Before the first release exists, the page deploys without them (the
+      # download links 404 until then).
+      - name: Fetch latest release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p site/downloads
+          gh release download --repo "${{ github.repository }}" \
+            --pattern 'openclip-*.zip' --dir site/downloads \
+            || echo "No release assets available yet; deploying page without downloads"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
