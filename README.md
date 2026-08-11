@@ -37,4 +37,4 @@ This was vibe coded. I've read the code, it makes sense. But I'm learning Rust a
 
 ## License
 
-MIT — see `LICENSE`.
+AGPL-3.0-or-later — see `LICENSE`.

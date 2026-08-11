@@ -7,7 +7,7 @@ name = "openclip"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.87"
-license = "MIT"
+license = "AGPL-3.0-or-later"
 description = "An open-source clipper plugin (VST3/CLAP): gain, softness, and clip amount."
 repository = "https://github.com/johnjackbogart/oclip"
 

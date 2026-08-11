@@ -36,17 +36,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      # Pull the latest release's plugin zips into the site so the Pages deployment hosts the
-      # downloads directly. Before the first release exists, the page deploys without them (the
-      # download links 404 until then).
+      # Pull the newest release's plugin zips into the site so the Pages deployment hosts the
+      # downloads directly. Resolved via the releases API rather than `gh release download`'s
+      # implicit "latest", because prereleases never count as "latest" and would silently deploy
+      # a page with broken download links. Only a repo with no releases at all deploys without
+      # downloads; a release that exists but is missing assets fails the deploy loudly.
       - name: Fetch latest release assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p site/downloads
-          gh release download --repo "${{ github.repository }}" \
-            --pattern 'openclip-*.zip' --dir site/downloads \
-            || echo "No release assets available yet; deploying page without downloads"
+          tag=$(gh api "repos/${{ github.repository }}/releases" \
+            --jq '[.[] | select(.draft | not)][0].tag_name // empty')
+          if [ -z "$tag" ]; then
+            echo "::warning::No published releases yet; deploying page without downloads"
+            exit 0
+          fi
+          echo "Bundling assets from release $tag"
+          gh release download "$tag" --repo "${{ github.repository }}" \
+            --pattern 'openclip-*.zip' --dir site/downloads
+          ls -l site/downloads
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

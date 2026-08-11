@@ -96,5 +96,7 @@ To manually test in a DAW, copy `target/bundled/openclip.vst3` into the local VS
 
 ## License
 
-MIT. Matches nice-plug's own permissive (ISC) license — no GPL entanglement from either VST3 or
-CLAP, since nice-plug doesn't link Steinberg's actual SDK source.
+AGPL-3.0-or-later. Copyleft is a deliberate project choice, not an obligation inherited from a
+dependency: nice-plug is permissively licensed (ISC) and doesn't link Steinberg's actual
+(GPLv3/proprietary dual-licensed) VST3 SDK source, so nothing forces copyleft — but ISC code can
+be incorporated into an AGPL work, and the combined work is distributed under the AGPL.
